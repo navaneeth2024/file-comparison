@@ -49,6 +49,7 @@ def find_duplicate_files(folders, by_name=False, start_time=None):
     total_bytes = [0]  # list for thread-safe access
     current_status = [""]  # for live updates
     all_files = []  # collect all files for parallel processing
+    seen = set()  # to avoid scanning same file multiple times
     
     speed_thread = threading.Thread(target=print_speed_live, args=(start_time, total_bytes, current_status), daemon=True)
     speed_thread.start()
@@ -70,7 +71,10 @@ def find_duplicate_files(folders, by_name=False, start_time=None):
                 size = os.path.getsize(filepath)
                 total_bytes[0] += size
                 folder_bytes += size
-                all_files.append(filepath)
+                real_path = os.path.realpath(filepath)
+                if real_path not in seen:
+                    seen.add(real_path)
+                    all_files.append(filepath)
                 folder_files += 1
                 total_files += 1
                 if total_files % 100 == 0 and start_time:
